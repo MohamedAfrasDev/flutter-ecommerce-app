@@ -1,0 +1,35 @@
+[
+    {
+      "image": "assets/images/products/product6.png",
+      "varText": "256 GB",
+      "price": "60000",
+      "brandImage": "assets/images/logos/samsung_logo.png",
+      "brand": "Samsung",
+      "title": "Apple iPhone 13"
+    },
+    {
+      "image": "assets/images/products/product5.png",
+      "varText": "50 M",
+      "price": "200",
+      "brandImage": "assets/images/logos/moose_logo_icon.png",
+      "brand": "Moose",
+      "title": "Moose T-Shirts"
+    },
+    {
+      "image": "assets/images/products/product1.png",
+      "varText": "256 GB",
+      "price": "500000",
+      "brandImage": "assets/images/logos/apple_logo_icon.png",
+      "brand": "Apple",
+      "title": "Apple MacBook Air M3"
+    },
+    {
+      "image": "assets/images/products/product7.png",
+      "varText": "8K 60 Raw/4K 60 SRAW/4K 120 10-Bit Video",
+      "price": "1159500",
+      "brandImage": "assets/images/logos/canon_logo.png",
+      "brand": "Asus",
+      "title": "Canon EOS R5"
+    }
+  ]
+  

@@ -1,0 +1,7 @@
+[
+    { "title": "New Arrival", "type": "newArrival" },
+    { "title": "Discount", "type": "discount" },
+    { "title": "Top Rated", "type": "topRated" },
+    { "title": "Free Delivery", "type": "freeDelivery" }
+  ]
+  

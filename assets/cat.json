@@ -1,0 +1,7 @@
+[
+    { "title": "By Category", "type": "category" },
+    { "title": "By Brand", "type": "brand" },
+    { "title": "By Material", "type": "material" }
+    
+  ]
+  

@@ -1,0 +1,7 @@
+[
+    { "image": "assets/icons/smartphone_icon.png", "title": "Smart Phones" },
+    { "image": "assets/icons/electronics.png", "title": "Electronics"},
+    { "image": "assets/icons/foods.png", "title": "Foods" },
+    { "image": "assets/icons/furnitures.png", "title": "Furnitures" }
+  ]
+  

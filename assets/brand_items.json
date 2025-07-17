@@ -1,0 +1,7 @@
+[
+    { "image": "assets/icons/apple-logo.png", "title": "Apple", "type": "category" },
+    { "image": "assets/icons/asus_logo.png", "title": "Asus", "type": "brand" },
+    { "image": "assets/icons/moose_logo.png", "title": "Moose", "type": "brand"},
+    { "image": "assets/icons/nike_logo.png", "title": "Nike", "type": "brand" }
+  ]
+  
