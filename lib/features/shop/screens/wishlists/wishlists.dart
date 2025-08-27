@@ -92,7 +92,13 @@ class _FavouriteScreenState extends State<FavouriteScreen> {
               color: dark ? TColors.primary : null,
             ),
           ),
-          Icon(Iconsax.shopping_cart_copy),
+          Padding(
+                    padding: const EdgeInsets.only(right: 20),
+                    child: TCartCounterIcon(
+                      onPressed: () {},
+                      iconColor: TColors.primary,
+                    ),
+                  ),
         ],
       ),
     ),

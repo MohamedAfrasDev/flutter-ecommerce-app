@@ -35,16 +35,15 @@ class _TBillingAmountSectionsState extends State<TBillingAmountSections> {
 
   var paymentMethod = 'Cash on delivery'.obs;
 
-
   final storage = GetStorage();
 
   var processingFee = 0.0.obs;
   var processingAmount = 0.0.obs;
 
   var orderAmount = 0.0.obs;
+  var amountIncluded = 0.0.obs;
 
-      final cartCon = Get.put(CartController());
-
+  final cartCon = Get.put(CartController());
 
   Future<void> _initPaymentDetails(String paymentMethods) async {
     paymentMethod.value = paymentMethods; // 🟩 or get from widget/args
@@ -55,39 +54,71 @@ class _TBillingAmountSectionsState extends State<TBillingAmountSections> {
 
     orderAmount = controller.totalPrice.obs;
 
+    amountIncluded = controller.totalPrice.obs;
+    paymentController.isPay.value = paymentMethod.value != 'Cash on delivery';
+
     setState(() {
       processingFee.value = fee.toDouble();
-          double totalAmount =
-        widget.isFastCheckout
-            ? controller.totalPriceFast
-            : controller.totalPrice; // Example total amount
-    double processingFeeAmount = (totalAmount * processingFee.value) / 100;
-    double finalAmount = totalAmount + processingFeeAmount;
+      double totalAmount =
+          widget.isFastCheckout
+              ? controller.totalPriceFast
+              : controller.totalPrice; // Example total amount
+      double processingFeeAmount = ((totalAmount * processingFee.value) / 100);
+      double finalAmount = (totalAmount + processingFeeAmount);
 
-    orderAmount.value = finalAmount;
-    processingAmount.value = processingFeeAmount.toDouble();
+      amountIncluded.value = totalAmount + storage.read('shippingCost');
+      orderAmount.value = finalAmount + storage.read('shippingCost');
+      processingAmount.value = processingFeeAmount.toDouble();
+      paymentController.isInclude.value = feeStructure.value=='include' ? true : false;
 
-    print("saas $paymentMethods");
+      paymentController.finalAmountt.value = feeStructure.value=='include' ? amountIncluded.value : orderAmount.value;
+      print(paymentController.isInclude.value.toString());
+
+      if(paymentController.isInclude.value == true) {
+        paymentController.finalAmountt.value = amountIncluded.value;
+      } else {
+        paymentController.finalAmountt.value == orderAmount.value;
+      }
+      
+      print("saas ${storage.read('shippingCost')}");
     });
   }
 
+  final controller = Get.put(CartController());
+
+  var feeStructure = ''.obs;
+
+  final timeController = Get.put(TimeGetController());
+
   @override
-  void initState(){
+  void initState() {
     super.initState();
-        paymentController.paymentMethod.value = paymentMethod.toString();
-  if(paymentMethod.toString()=='Cash on delivery'){
-    setState(() {
-      orderAmount.value = widget.isFastCheckout ? cartCon.totalPriceFast : cartCon.totalPrice;
+
+    controller.getProcessingFeeStructure().then((value) {
+      feeStructure.value = value.toString().toLowerCase();
+      paymentController.isInclude.value = feeStructure.value=='include' ? true : false;
     });
-  } 
-  }     
+
+    paymentController.paymentMethod.value = paymentMethod.value;
+
+    if (paymentMethod.value == 'Cash on delivery') {
+      paymentController.isPay.value = false;
+      orderAmount.value =
+          widget.isFastCheckout ? cartCon.totalPriceFast + storage.read('shippingCost') : cartCon.totalPrice + storage.read('shippingCost');
+      amountIncluded.value =
+          widget.isFastCheckout ? cartCon.totalPriceFast + storage.read('shippingCost'): cartCon.totalPrice + storage.read('shippingCost');
+                paymentController.finalAmountt.value = feeStructure.value=='include' ? amountIncluded.value : orderAmount.value;
+
+    } else {
+      paymentController.isPay.value = true;
+            paymentController.finalAmountt.value = feeStructure.value=='include' ? amountIncluded.value : orderAmount.value;
+
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunction.isDarkMode(context);
-    final controller = Get.put(CartController());
-
-
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,7 +145,7 @@ class _TBillingAmountSectionsState extends State<TBillingAmountSections> {
           children: [
             Text('Shipping Fee', style: Theme.of(context).textTheme.bodyMedium),
             Text(
-              '${storage.read('currency_symbol')} ${widget.shippingCost.toString()}',
+              '${storage.read('currency_symbol')} ${storage.read('shippingCost')}',
               style: Theme.of(context).textTheme.labelLarge,
             ),
           ],
@@ -125,7 +156,10 @@ class _TBillingAmountSectionsState extends State<TBillingAmountSections> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Tax Fee', style: Theme.of(context).textTheme.bodyMedium),
-            Text('${storage.read('currency_symbol')} 500', style: Theme.of(context).textTheme.labelLarge),
+            Text(
+              '${storage.read('currency_symbol')} 500',
+              style: Theme.of(context).textTheme.labelLarge,
+            ),
           ],
         ),
         const SizedBox(height: TSizes.md),
@@ -197,7 +231,8 @@ class _TBillingAmountSectionsState extends State<TBillingAmountSections> {
         const SizedBox(height: TSizes.sm),
 
         Obx(() {
-          if (paymentMethod.value != 'Cash on delivery') {
+          if (paymentMethod.value != 'Cash on delivery' &&
+              feeStructure.value.toString() == 'exclude') {
             return Text(
               'Processing ${processingFee.toString()}%  ${storage.read('currency_symbol')} ${processingAmount.toStringAsFixed(2)}',
               style: Theme.of(context).textTheme.labelMedium,
@@ -212,7 +247,7 @@ class _TBillingAmountSectionsState extends State<TBillingAmountSections> {
           children: [
             Text('Order Total', style: Theme.of(context).textTheme.bodyMedium),
             Text(
-              '${storage.read('currency_symbol')} ${orderAmount.toString()}',
+              paymentController.finalAmountt.value.toString(),
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ],

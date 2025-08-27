@@ -34,6 +34,9 @@ class CartScreen extends StatelessWidget {
                 children: [
                   Text('Qty 1: ${storage.read('currency_symbol')} ${item.price}'),
                   Text('${storage.read('currency_symbol')} ${(item.price * item.quantity).toStringAsFixed(2)}',style: Theme.of(context).textTheme.titleSmall,),
+                  GestureDetector(
+                    onTap: () => cartController.removeFromCart(item.id),
+                    child: Text('Remove', style: TextStyle(color: Colors.red),))
                 ],
               ),
               

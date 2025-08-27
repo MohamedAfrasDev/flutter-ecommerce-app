@@ -6,7 +6,9 @@ import 'package:online_shop/common/widgets/custom_shapes/containers/t_rounded_im
 import 'package:online_shop/features/shop/screens/all_products/all_products.dart';
 import 'package:online_shop/features/shop/screens/home/widgets/product_slider_category.dart';
 import 'package:online_shop/features/shop/screens/home/widgets/product_slider_category_horizontal.dart';
+import 'package:online_shop/features/shop/screens/sub_category/widgets/brand_slider.dart';
 import 'package:online_shop/features/shop/screens/sub_category/widgets/product_slider_sub_category.dart';
+import 'package:online_shop/features/shop/screens/sub_category/widgets/related_category.dart';
 import 'package:online_shop/features/shop/screens/sub_category/widgets/sub_banner.dart';
 import 'package:online_shop/utils/constants/colors.dart';
 import 'package:online_shop/utils/constants/image_strings.dart';
@@ -14,6 +16,7 @@ import 'package:online_shop/utils/constants/sizes.dart';
 import 'package:get/get.dart';
 import 'package:online_shop/utils/device/device_utility.dart';
 import 'package:online_shop/utils/helpers/helper_function.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SubCategoriesScreen extends StatelessWidget {
   const SubCategoriesScreen({
@@ -21,10 +24,11 @@ class SubCategoriesScreen extends StatelessWidget {
     required this.text,
     required this.image,
     this.categoryID,
+    this.tabID,
   });
 
   final String text, image;
-  final String? categoryID;
+  final String? categoryID, tabID;
   @override
   Widget build(BuildContext context) {
     final dark = THelperFunction.isDarkMode(context);
@@ -76,35 +80,86 @@ class SubCategoriesScreen extends StatelessWidget {
               Text(text, style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: TSizes.spaceBetwwenSections),
 
-              Padding(
-                padding: const EdgeInsets.all(TSizes.defaultSpace),
-                child: TSubBannerSlider(location: categoryID!),
-              ),
+              TSubBannerSlider(location: categoryID!),
               SizedBox(height: TSizes.spaceBetwwenSections),
-
-              TProductSliderSubCategory(categoryID: categoryID!),
-
               Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(left: TSizes.lg),
-                    child: TSectionHeading(
-                      title: 'Sports shirts',
-                      onPressed: () => Get.to(() => const AllProducts()),
+                    child: Text(
+                      'Suggested Brands',
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                   ),
-                  const SizedBox(height: TSizes.spaceBetwwenItems / 2),
+                  const SizedBox(height: TSizes.spaceBetwwenItems),
+                  FutureBuilder<List<Map<String, dynamic>>>(
+                    future: Supabase.instance.client
+                        .from('brands')
+                        .select()
+                        .eq('category', categoryID!),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                  //   TProductSliderCategory(),
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(child: Text("No Brands found"));
+                      }
+
+                      final categories = snapshot.data!;
+                      return TBrandSlider(dataList: categories);
+                    },
+                  ),
                 ],
               ),
+
               const SizedBox(height: TSizes.spaceBetwwenSections),
 
-              Padding(
-                padding: const EdgeInsets.only(right: TSizes.md),
-                child: TProductSliderHorizontal(),
-              ),
+              TProductSliderSubCategory(categoryID: categoryID!),
 
+              const SizedBox(height: TSizes.spaceBetwwenSections),
+
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: TSizes.lg),
+                    child: Text(
+                      'Related Categories',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                  const SizedBox(height: TSizes.spaceBetwwenItems),
+                  FutureBuilder<List<Map<String, dynamic>>>(
+                    future: Supabase.instance.client
+                        .from('tab_categories')
+                        .select()
+                        .eq('tab_id', tabID!),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(child: Text("No Categories found"));
+                      }
+
+                      final filteredCategories =
+                          snapshot.data!.where((category) {
+                            return category['id'].toString() != categoryID;
+                          }).toList();
+
+                      if (filteredCategories.isEmpty) {
+                        return const Center(child: Text("No Categories found"));
+                      }
+
+                      return TRelatedCategory(dataList: filteredCategories);
+                    },
+                  ),
+                ],
+              ),
+            
               const SizedBox(height: TSizes.spaceBetwwenSections),
             ],
           ),

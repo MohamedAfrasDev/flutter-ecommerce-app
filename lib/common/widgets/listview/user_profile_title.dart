@@ -26,7 +26,10 @@ class _TUserProfileTitleState extends State<TUserProfileTitle> {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: TCircularImage(image: controller.user.value!.customerImage == 'No Image' ? TImages.appLightLogo : controller.user.value!.customerImage!, width: 50, height: 50, padding: 0, isNetworkImage: controller.user.value!.customerImage == 'No Image' ? false : true,),
+      leading: SizedBox(
+        width: 50,
+        height: 50,
+        child: CircleAvatar(backgroundImage:( controller.user.value!.customerImage == 'No Image') ? AssetImage(TImages.appLightLogo) : NetworkImage(storage.read('UserImage').toString(),))),
       title: Text(controller.user.value!.customerName ?? 'Unknown', style: Theme.of(context).textTheme.headlineSmall!.apply(color: Colors.white),),
       subtitle: Text(controller.user.value!.customerEmail ?? 'Unknown', style: Theme.of(context).textTheme.bodyMedium!.apply(color: Colors.white),),
       trailing: IconButton(onPressed: () => Get.to(() =>  ProfileScreen(customerModel: controller.user.value!,)), icon: Icon(Iconsax.edit_copy, color: Colors.white,)),

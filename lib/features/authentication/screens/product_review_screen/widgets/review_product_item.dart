@@ -28,25 +28,29 @@ class RevviewProductItem extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  TRoundedImage(
-                imageUrl: cartItem.image ?? '',
-                width: 60,
-                height: 60,
-                isNetworkImage: true,
-              ),
-              const SizedBox(width: TSizes.spaceBetwwenItems,),
-      
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(cartItem.title!, style: Theme.of(context).textTheme.titleMedium,),
-                  const SizedBox(height: TSizes.sm,),
-                  Text('Product, var', style: Theme.of(context).textTheme.labelLarge,),
-                ],
-              )
-                ],
+              Flexible(
+                child: Row(
+                  children: [
+                    TRoundedImage(
+                  imageUrl: cartItem.image ?? '',
+                  width: 60,
+                  height: 60,
+                  isNetworkImage: true,
+                ),
+                const SizedBox(width: TSizes.spaceBetwwenItems,),
+                      
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(cartItem.title, style: Theme.of(context).textTheme.titleMedium, ),
+                      const SizedBox(height: TSizes.sm,),
+                      Text('Product, var', style: Theme.of(context).textTheme.labelLarge,),
+                    ],
+                  ),
+                )
+                  ],
+                ),
               ),
 
               Text(cartItem.quantity.toString(), style: Theme.of(context).textTheme.titleLarge,),

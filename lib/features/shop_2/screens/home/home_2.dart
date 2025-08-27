@@ -78,6 +78,7 @@ homeController.getAppCurrencySymbol().then((value) {
 
 timeController.getShippingCost().then((cost) {
   setState(() { 
+    print('cost✨✨✨ ad ${cost}');
     storage.write('shippingCost', cost);
   });
 });
@@ -245,7 +246,7 @@ timeController.getShippingCost().then((cost) {
                 child: Obx(() {
                   return controller.banners.isEmpty
                       ? const CircularProgressIndicator()
-                      : TPromoSlider(isPadding: false);
+                      : RepaintBoundary(child: TPromoSlider(isPadding: false));
                 }),
               ),
 
@@ -257,6 +258,7 @@ timeController.getShippingCost().then((cost) {
                 child: TSectionHeading(
                   title: 'What are you looking for ?',
                   onPressed: () => controllerNav.selectedIndex.value = 1,
+                  showActionButton: false,
                 ),
               ),
               const TTabViewICategory(isTab1: true),
@@ -267,7 +269,7 @@ timeController.getShippingCost().then((cost) {
 
               Padding(
                 padding: const EdgeInsets.only(left: TSizes.lg),
-                child: TSectionHeading(title: 'Based on your search'),
+                child: TSectionHeading(title: 'Similar Products', showActionButton: false,),
               ),
               const SizedBox(height: TSizes.spaceBetwwenItems),
               TProductSliderCategory(
@@ -279,7 +281,7 @@ timeController.getShippingCost().then((cost) {
 
               Padding(
                 padding: const EdgeInsets.only(left: TSizes.lg),
-                child: TSectionHeading(title: 'Featured for you'),
+                child: TSectionHeading(title: 'Featured for you', showActionButton: false,),
               ),
               // ✅ Product Grid View
               Padding(

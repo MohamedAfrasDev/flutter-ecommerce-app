@@ -55,7 +55,7 @@ class TTabViewItems extends StatelessWidget {
                         splashColor: Colors.transparent,
                         highlightColor: Colors.transparent,
                         hoverColor: Colors.transparent,
-                        tabBarTheme: TabBarTheme(
+                        tabBarTheme: TabBarThemeData(
                           overlayColor: MaterialStateProperty.all(
                             Colors.transparent,
                           ),

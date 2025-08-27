@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:online_shop/utils/http/app/app_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'cart_item_model.dart';
 
 class CartController extends GetxController {
@@ -13,7 +15,24 @@ class CartController extends GetxController {
 
 
   static const String _storageKey = 'cart_items';
+Future<String?> getProcessingFeeStructure() async {
+  final supabase = Supabase.instance.client;
 
+  try {
+    final check = await supabase
+        .from('app_config')
+        .select('value')
+        .eq('title', 'Processing Fee Structure')
+        .maybeSingle();
+
+    print('🟢 Supabase check result: $check');
+
+return check?['value'].toString().toLowerCase();
+  } catch (e) {
+    print('🔴 Error fetching review config: ${e.toString()}');
+    return 'include';
+  }
+}
   @override
   void onInit() {
     super.onInit();
@@ -129,17 +148,23 @@ class CartController extends GetxController {
     _saveTempToCart();
   }
 
+  final storage = GetStorage();
+
+  
   double get subTotal => cartItems.fold(
       0.0, (sum, item) => sum + (item.price * item.quantity));
 
         double get totalPrice => cartItems.fold(
       0.0, (sum, item) => sum + (item.price * item.quantity));
 
+          double get totalPriceCart => cartItems.fold(
+      0.0, (sum, item) => sum + (item.price * item.quantity));
+
         double get subTotalFast => cartFastItems.fold(
       0.0, (sum, item) => sum + (item.price * item.quantity));
 
         double get totalPriceFast => cartFastItems.fold(
-      0.0, (sum, item) => sum + (item.price * item.quantity));
+      0.0, (sum, item) => sum + (item.price * item.quantity)) + storage.read('shippingCost');
 }
     void _showBottomSheet(BuildContext context) {
       final cartController = Get.put(CartController());

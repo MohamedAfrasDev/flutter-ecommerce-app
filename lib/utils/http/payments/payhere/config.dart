@@ -20,28 +20,29 @@ class Config {
   Config({required this.paymentAmount});
 
   /// Builds the payment map object
-  static Map<String, dynamic> buildPaymentObject(String amount) {
+  static Map<String, dynamic> buildPaymentObject(String amount, String orderID, String street, String state, String city, String country) {
+    final storage = GetStorage();
     return {
-      "sandbox": true,
-      "merchant_id": TAPIKeys.merchantID,
-      "merchant_secret": TAPIKeys.secretKey,
+      "sandbox": storage.read('isSandBox') == true ? true : false,
+      "merchant_id": storage.read('MerchantID').toString(),
+      "merchant_secret": storage.read("APIKey").toString(),
       "notify_url": "http://sample.com/notify",
-      "order_id": "ItemNo12345",
+      "order_id": orderID,
       "items": "Online Shop Purchase",
       "amount": amount,
       "currency": TAppConfig.currency_symbol,
-      "first_name": "Saman",
-      "last_name": "Perera",
-      "email": "samanp@gmail.com",
-      "phone": "0771234567",
-      "address": "No.1, Galle Road",
-      "city": "Colombo",
-      "country": "Sri Lanka",
-      "delivery_address": "No. 46, Galle road, Kalutara South",
-      "delivery_city": "Kalutara",
-      "delivery_country": "Sri Lanka",
+      "first_name": storage.read('UserName').toString(),
+      "last_name": "",
+      "email": storage.read('UserEmail').toString(),
+      "phone": storage.read('UserPhoneNumber').toString(),
+      "address": street,
+      "city": city,
+      "country": country,
+      "delivery_address": "${street} ${state} ${city} ${country}",
+      "delivery_city": city,
+      "delivery_country": country,
       "custom_1": "",
-      "custom_2": ""
+      "custom_2": "",
     };
   }
 
@@ -52,17 +53,22 @@ class Config {
   }
 
   /// Start full cart payment
-  void startPayment(List<CartItem> products, AddressModel? addressModel, String? totalPayment) {
+  void startPayment(
+    List<CartItem> products,
+    AddressModel? addressModel,
+    String? totalPayment,
+  ) {
     if (paymentAmount == null || addressModel == null || totalPayment == null) {
       print("❌ Missing data for payment.");
       return;
     }
 
     final orderID = generateOrderID();
-    final double totalAmount = (double.tryParse(totalPayment) ?? 0) + TAppConfig.shipping_cost;
+    final double totalAmount =
+        (double.tryParse(totalPayment) ?? 0) + TAppConfig.shipping_cost;
 
     PayHere.startPayment(
-      buildPaymentObject(paymentAmount!),
+      buildPaymentObject(paymentAmount!, orderID, addressModel.street, addressModel.state, addressModel.city, addressModel.country),
       (paymentId) {
         print("✅ One Time Payment Success. Payment ID: $paymentId");
         final storage = GetStorage();
@@ -88,20 +94,30 @@ class Config {
         final customerController = Get.put(CustomerController());
 
         customerController.checkCustomerExist(storage.read('UID'));
-        
+
         final controller = Get.put(OrderController());
         controller.saveOrder(order);
-for (final item in products) {
-  controller.updateProductStocks(item.id, item.quantity);
-}
+        for (final item in products) {
+          if (item.variationAttributes.isNotEmpty && item.variationID != null) {
+            controller.updateJsonbVariationStock(
+              productId: item.id,
+              variationId: item.variationID!,
+              quantityToSubtract: item.quantity,
+            );
+          } else {
+            controller.updateProductStocks(item.id, item.quantity);
+          }
+        }
 
-        Get.offAll(() => OrderSuccessfulScreen(
-              products: products,
-              paymentID: paymentId,
-              addressModel: addressModel,
-              totalPayment: totalAmount.toString(),
-              orderID: orderID,
-            ));
+        Get.offAll(
+          () => OrderSuccessfulScreen(
+            products: products,
+            paymentID: paymentId,
+            addressModel: addressModel,
+            totalPayment: totalAmount.toString(),
+            orderID: orderID,
+          ),
+        );
       },
       (error) {
         print("❌ One Time Payment Failed. Error: $error");
@@ -113,81 +129,82 @@ for (final item in products) {
   }
 
   /// Start instant single-product payment
-void startInstantPaymentForProduct(String s, {
-  required CartItem product,
-  required int quantity,
-  required String paymentAmount,
-  required AddressModel addressModel,
-  required ProductAttributeModel productVariation,
-}) {
-  if (paymentAmount.isEmpty) {
-    print("❌ Missing data for payment.");
-    return;
-  }
+  void startInstantPaymentForProduct(
+    String s, {
+    required CartItem product,
+    required int quantity,
+    required String paymentAmount,
+    required AddressModel addressModel,
+    required ProductAttributeModel productVariation,
+  }) {
+    if (paymentAmount.isEmpty) {
+      print("❌ Missing data for payment.");
+      return;
+    }
 
+    final orderID = generateOrderID();
+    final double subTotal = double.tryParse(paymentAmount) ?? 0;
+    final double shippingCost = TAppConfig.shipping_cost;
+    final double totalAmount = subTotal + shippingCost;
 
-  final orderID = generateOrderID();
-  final double subTotal = double.tryParse(paymentAmount) ?? 0;
-  final double shippingCost = TAppConfig.shipping_cost;
-  final double totalAmount = subTotal + shippingCost;
+    PayHere.startPayment(
+      buildPaymentObject(paymentAmount, orderID, addressModel.street, addressModel.state, addressModel.city, addressModel.country),
+      (paymentId) async {
+        print("✅ One Time Payment Success. Payment ID: $paymentId");
 
-  PayHere.startPayment(
-    buildPaymentObject(paymentAmount),
-    (paymentId) async {
-      print("✅ One Time Payment Success. Payment ID: $paymentId");
+        final storage = GetStorage();
+        final order = OrderModel(
+          orderID: orderID,
+          userID: storage.read('UID'),
+          orderStatus: 'placed',
+          paymentMethod: 'PayHere',
+          paymentStatus: 'Paid',
+          shippingAddress: [addressModel],
+          billingAddress: [addressModel],
+          totalPrice: totalAmount,
+          shippingCost: shippingCost,
+          subTotal: subTotal,
+          taxFee: 0,
+          currencySymbol: TAppConfig.currency_symbol,
+          orderDate: DateTime.now(),
+          products: [
+            {
+              'id': product.id,
+              'title': product.title,
+              'quantity': quantity,
+              'price': totalAmount,
+              'image': product.image ?? '',
+              'variationAttributes': productVariation,
+            },
+          ],
+          couponCode: null,
+          note: null,
+        );
 
-      final storage = GetStorage();
-      final order = OrderModel(
-        orderID: orderID,
-        userID: storage.read('UID'),
-        orderStatus: 'placed',
-        paymentMethod: 'PayHere',
-        paymentStatus: 'Paid',
-        shippingAddress: [addressModel],
-        billingAddress: [addressModel],
-        totalPrice: totalAmount,
-        shippingCost: shippingCost,
-        subTotal: subTotal,
-        taxFee: 0,
-        currencySymbol: TAppConfig.currency_symbol,
-        orderDate: DateTime.now(),
-        products: [
-          {
-            'id': product.id,
-            'title': product.title,
-            'quantity': quantity,
-            'price': totalAmount,
-            'image': product.image ?? '',
-            'variationAttributes': productVariation,
-          }
-        ],
-        couponCode: null,
-        note: null,
-      );
+        final customerController = Get.put(CustomerController());
+        customerController.checkCustomerExist(storage.read('UID'));
 
-      final customerController = Get.put(CustomerController());
-      customerController.checkCustomerExist(storage.read('UID'));
+        final controller = Get.put(OrderController());
+        await controller.saveOrder(order);
 
-      final controller = Get.put(OrderController());
-      await controller.saveOrder(order);
+        await controller.updateProductStocks(product.id!, quantity);
 
-      await controller.updateProductStocks(product.id!, quantity);
-
-      Get.offAll(() => OrderSuccessfulScreen(
-            products: [product],  // Corrected: pass ProductModel list
+        Get.offAll(
+          () => OrderSuccessfulScreen(
+            products: [product], // Corrected: pass ProductModel list
             paymentID: paymentId,
             addressModel: addressModel,
             totalPayment: totalAmount.toString(),
             orderID: orderID,
-          ));
-    },
-    (error) {
-      print("❌ One Time Payment Failed. Error: $error");
-    },
-    () {
-      print("⚠️ One Time Payment Dismissed by user.");
-    },
-  );
-}
-
+          ),
+        );
+      },
+      (error) {
+        print("❌ One Time Payment Failed. Error: $error");
+      },
+      () {
+        print("⚠️ One Time Payment Dismissed by user.");
+      },
+    );
+  }
 }

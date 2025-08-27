@@ -315,6 +315,12 @@ class _TProductGridItemState extends State<TProductGridItem> {
                                       : {},
                             );
                             controller.addToCart(newItem);
+                               Get.snackbar(
+                            "Added",
+                            "Product added to cart",
+                            backgroundColor: TColors.primary,
+                            colorText: Colors.white,
+                          );
                           },
                           child: Padding(
                             padding: const EdgeInsets.only(right: 5),

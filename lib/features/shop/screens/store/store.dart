@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
 import 'package:online_shop/common/styles/layouts/grid_view_layout.dart';
 import 'package:online_shop/common/widgets/custom_shapes/containers/section_heading.dart';
+import 'package:online_shop/features/shop/screens/home/widgets/cart_menu.dart';
 import 'package:online_shop/features/shop/screens/store/controller/store_controller.dart';
 import 'package:online_shop/features/shop/screens/store/widgets/category_tab.dart';
 import 'package:online_shop/features/shop/screens/store/widgets/product_grid_item.dart';
@@ -55,7 +56,13 @@ class StoreScreen extends StatelessWidget {
                             color: dark ? TColors.primary : null,
                           ),
                     ),
-                    const Icon(Iconsax.shopping_cart_copy),
+                    Padding(
+                    padding: const EdgeInsets.only(right: 20),
+                    child: TCartCounterIcon(
+                      onPressed: () {},
+                      iconColor: TColors.primary,
+                    ),
+                  ),
                   ],
                 ),
               ),

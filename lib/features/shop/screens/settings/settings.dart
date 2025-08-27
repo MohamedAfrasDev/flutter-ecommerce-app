@@ -25,114 +25,115 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-   final controller = Get.put(CustomerController());
-    final storage = GetStorage();
+  final controller = Get.put(CustomerController());
+  final storage = GetStorage();
 
-    final monthlySalesController = Get.put(MonthlySalesController());
+  final monthlySalesController = Get.put(MonthlySalesController());
 
-
-    @override
-    void initState(){
-      super.initState();
-      setState(() {
-        
-        controller.getUserDetail(Supabase.instance.client.auth.currentUser!.id);
-      });
-    }
-
- 
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      controller.getUserDetail(Supabase.instance.client.auth.currentUser!.id);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final storage = GetStorage();
-    
-    
-        final customerController = Get.put(CustomerController());
-        
 
-        final orderController = Get.put(OrderController());
+    final customerController = Get.put(CustomerController());
 
-        print(customerController.checkCustomerExist(storage.read('UID')));
+    final orderController = Get.put(OrderController());
+
+    print(customerController.checkCustomerExist(storage.read('UID')));
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           children: [
             TPrimaryHeader(
               child: Column(
-              children: [
-                TAppBar(title: Text('Account', style: Theme.of(context).textTheme.headlineMedium!.apply(color: Colors.white),),),
+                children: [
+                  TAppBar(
+                    title: Text(
+                      'Account',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.headlineMedium!.apply(color: Colors.white),
+                    ),
+                  ),
 
-                TUserProfileTitle(),
-                const SizedBox(height: TSizes.spaceBetwwenSections,)
-              ],
-            ),
+                  TUserProfileTitle(),
+                  const SizedBox(height: TSizes.spaceBetwwenSections),
+                ],
+              ),
             ),
 
             Padding(
               padding: const EdgeInsets.all(TSizes.defaultSpace),
               child: Column(
                 children: [
-                  const TSectionHeading(title: 'Account Settings', showActionButton: false,),
-                  const SizedBox(height: TSizes.spaceBetwwenItems,),
-
-                  TSettingsMenuTile(icon: Iconsax.safe_home_copy, title: "My Addresses", subTitle: "Set shopping deleivery address", onTap: () => Get.to(() => const UserAddressScreen())),
-                  const SizedBox(height: TSizes.sm,),
-                  TSettingsMenuTile(icon: Iconsax.shopping_cart_copy, title: "My Cart", subTitle: "Add, remove products and move to checkout", onTap: () => Get.to(() =>  CartScreen())),
-                  const SizedBox(height: TSizes.sm,),
-                  TSettingsMenuTile(icon: Iconsax.bag_tick_copy, title: "My Orders", subTitle: "In-progress and Completed Orders", onTap: () => Get.to(() => const OrderScreen())),
-                  const SizedBox(height: TSizes.sm,),
-                  
-                  TSettingsMenuTile(icon: Iconsax.notification_copy, title: "Notification", subTitle: "Set any kind of notification message", onTap: () {
-                          monthlySalesController.updateMonthlySales(100, 1, 2);
-
-                  }),
-                  
-
-                  const SizedBox(height: TSizes.spaceBetwwenItems,),
-                  TSectionHeading(title: 'App Settings', showActionButton: false,),
-                  SizedBox(height: TSizes.spaceBetwwenItems,),
-                  TSettingsMenuTile(icon: Iconsax.document_upload_copy, title: "Load Data", subTitle: "upload Data to your Cloud Firebase"),
-                  TSettingsMenuTile(
-                    icon: Iconsax.location_copy,
-                    title: 'Geolocation',
-                    subTitle: "Set recommendation base on location",
-                    trailing: Switch(value: true, onChanged: (value) {}),
+                  const TSectionHeading(
+                    title: 'Account Settings',
+                    showActionButton: false,
                   ),
+                  const SizedBox(height: TSizes.spaceBetwwenItems),
 
                   TSettingsMenuTile(
-                    icon: Iconsax.security_card_copy,
-                    title: 'Safe Mode',
-                    subTitle: "Seach results is safe for all ages",
-                    trailing: Switch(value: false, onChanged: (value) {}),
+                    icon: Iconsax.safe_home_copy,
+                    title: "My Addresses",
+                    subTitle: "Set shopping deleivery address",
+                    onTap: () => Get.to(() => const UserAddressScreen()),
                   ),
-
+                  const SizedBox(height: TSizes.sm),
                   TSettingsMenuTile(
-                    icon: Iconsax.image_copy,
-                    title: 'HD Image Quality',
-                    subTitle: "Set image quality to be seen",
-                    trailing: Switch(value: false, onChanged: (value) {}),
+                    icon: Iconsax.shopping_cart_copy,
+                    title: "My Cart",
+                    subTitle: "Add, remove products and move to checkout",
+                    onTap: () => Get.to(() => CartScreen()),
+                  ),
+                  const SizedBox(height: TSizes.sm),
+                  TSettingsMenuTile(
+                    icon: Iconsax.bag_tick_copy,
+                    title: "My Orders",
+                    subTitle: "In-progress and Completed Orders",
+                    onTap: () => Get.to(() => const OrderScreen()),
+                  ),
+                  const SizedBox(height: TSizes.sm),
+
+                  // TSettingsMenuTile(icon: Iconsax.notification_copy, title: "Notification", subTitle: "Set any kind of notification message", onTap: () {
+                  //  //     orderController.updateProductStocks(productID: '411e1f92-6a23-49a1-a085-a288e5af0598', selectedStock: 2, variationId: '[#58155]');
+
+                  // }),
+                  const SizedBox(height: TSizes.spaceBetwwenItems),
+                  TSectionHeading(
+                    title: 'App Settings',
+                    showActionButton: false,
                   ),
 
-                  const SizedBox(height: TSizes.spaceBetwwenSections,),
+                  const SizedBox(height: TSizes.spaceBetwwenSections),
                   SizedBox(
                     width: double.infinity,
-                    child: OutlinedButton(onPressed: () {
-                      Supabase.instance.client.auth.signOut();
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Supabase.instance.client.auth.signOut();
 
-                      final storage = GetStorage();
-                      storage.erase();
-                      Get.offAll(() => LoginScreen());
-                    }, child: const Text('Logout')),
+                        final storage = GetStorage();
+                        storage.erase();
+                        Get.offAll(() => LoginScreen());
+                      },
+                      child: const Text('Logout'),
+                    ),
                   ),
-       const SizedBox(height: TSizes.spaceBetwwenSections * 2.5,)
 
+                  
+                  const SizedBox(height: TSizes.spaceBetwwenSections * 2.5),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),
     );
   }
 }
-

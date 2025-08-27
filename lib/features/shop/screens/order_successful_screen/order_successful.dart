@@ -52,7 +52,8 @@ void initState() {
 
   // Call loadAddresses after the first frame is rendered
   WidgetsBinding.instance.addPostFrameCallback((_) {
-
+controller.totalPrice == 0.0;
+controller.totalPriceFast == 0.0;
     controller.clearCart(); // this can now safely call setState()
   });
 }
@@ -211,35 +212,7 @@ void initState() {
                   ),
                 ),
 
-                GestureDetector(
-                  onTap: () async {
-                    print(generateOrderID());// ✅ Debug print
-                  },
-                  child: Container(
-                    width: TSizes.buttonWidth + 30,
-                    decoration: BoxDecoration(
-                      color:
-                          dark
-                              ? Colors.white.withOpacity(0.55)
-                              : TColors.primary,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Row(
-                        spacing: 10,
-                        children: [
-                          Image.asset(TImages.bill_icon, width: 20, height: 20),
-                          Text(
-                            'Download Bill',
-                            style: Theme.of(context).textTheme.bodyMedium!
-                                .copyWith(color: TColors.textWhite),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+        
 
                 const SizedBox(height: TSizes.spaceBetwwenItems),
                 GestureDetector(

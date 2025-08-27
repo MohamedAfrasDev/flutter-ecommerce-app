@@ -14,7 +14,7 @@ class TVerticalImageText extends StatelessWidget {
     this.backgroundColor,
     this.onTap,
     this.isIcon = false,
-   this.isNetworkImage = false,
+    this.isNetworkImage = false,
   });
 
   final String image, title;
@@ -43,16 +43,13 @@ class TVerticalImageText extends StatelessWidget {
                 Flexible(
                   flex: 3,
                   child: CachedNetworkImage(
-  imageUrl: image,
-  placeholder: (context, url) => CircularProgressIndicator(),
-   errorWidget: (context, url, error) {
-    print("Error loading image: $error");
-    return Icon(Icons.error);
-  },
-  
-)
-
-
+                    imageUrl: image,
+                    placeholder: (context, url) => CircularProgressIndicator(),
+                    errorWidget: (context, url, error) {
+                      print("Error loading image: $error");
+                      return Icon(Icons.error);
+                    },
+                  ),
                 ),
                 const SizedBox(height: TSizes.sm),
                 Flexible(

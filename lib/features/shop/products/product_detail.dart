@@ -20,10 +20,12 @@ import 'package:online_shop/features/shop/screens/cart/cart.dart';
 import 'package:online_shop/features/shop/screens/cart/controller/cart_controller.dart';
 import 'package:online_shop/features/shop/screens/cart/controller/cart_item_model.dart';
 import 'package:online_shop/features/shop/screens/checkout/checkout.dart';
+import 'package:online_shop/features/shop/screens/checkout/controller/payment_controller.dart';
 import 'package:online_shop/features/shop/screens/checkout/widgets/billing_address_section.dart';
 import 'package:online_shop/features/shop/screens/checkout/widgets/billing_amount_section.dart';
 import 'package:online_shop/features/shop/screens/home/controllers/home_controllers.dart';
 import 'package:online_shop/features/shop/screens/home/widgets/product_slider_category_horizontal.dart';
+import 'package:online_shop/features/shop/screens/order_successful_screen/order_successful.dart';
 import 'package:online_shop/features/shop/screens/store/controller/store_controller.dart';
 import 'package:online_shop/features/shop/screens/store/widgets/product_grid_item.dart';
 import 'package:online_shop/features/shop/screens/wishlists/controller/whishlist_controller.dart';
@@ -34,6 +36,7 @@ import 'package:online_shop/utils/constants/text_strings.dart';
 import 'package:online_shop/utils/helpers/helper_function.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:online_shop/utils/helpers/models/address_model.dart';
+import 'package:online_shop/utils/helpers/models/order_model.dart';
 import 'package:online_shop/utils/http/payments/payhere/config.dart';
 import 'package:online_shop/utils/repository/product_model/attributes_model.dart';
 import 'package:online_shop/utils/repository/product_model/brand_model.dart';
@@ -69,9 +72,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final storeController = Get.put(StoreController());
 
   final homeController = Get.put(HomeControllers());
-List<AddressModel> addresses = [];
+  List<AddressModel> addresses = [];
   AddressModel? selectedAddress;
 
+  final paymentController = Get.put(PaymentController());
+
+  var feeStructure = ''.obs;
 
   Future<void> loadAddresses() async {
     final loadedAddresses = await AddressAddController.instance.getAddresses();
@@ -82,10 +88,20 @@ List<AddressModel> addresses = [];
       }
     });
   }
+
+  final cartCont = Get.put(CartController());
   @override
   void initState() {
     super.initState();
-loadAddresses();
+    cartCont.getProcessingFeeStructure().then((value) {
+      feeStructure.value = value.toString().toLowerCase();
+    });
+
+    ever(paymentController.isPay, (value) {
+      print('🔄 isPay changed to: $value');
+      paymentController.isPay.value = value;
+    });
+    loadAddresses();
     homeController.getAppReviewEnabled().then((enable) {
       widget._isReviewEnabled = enable;
     });
@@ -95,6 +111,45 @@ loadAddresses();
     });
 
     widget._reviewsLength = reviewController.reviews.length.toString();
+
+    var paymentMethod = 'Cash on delivery'.obs;
+
+    final storage = GetStorage();
+
+    var processingFee = 0.0.obs;
+    var processingAmount = 0.0.obs;
+
+    var orderAmount = 0.0.obs;
+    var amountIncluded = 0.0.obs;
+
+    final cartCon = Get.put(CartController());
+
+    Future<void> _initPaymentDetails(String paymentMethods) async {
+      paymentMethod.value = paymentMethods; // 🟩 or get from widget/args
+      paymentController.paymentMethod.value = paymentMethods;
+
+      final fee = await paymentController.getProcessingFee(paymentMethod.value);
+      final controller = Get.put(CartController());
+
+      orderAmount = controller.totalPrice.obs;
+
+      amountIncluded = controller.totalPrice.obs;
+      paymentController.isPay.value = paymentMethod.value != 'Cash on delivery';
+
+      setState(() {
+        processingFee.value = fee.toDouble();
+        double totalAmount = controller.totalPriceFast;
+        double processingFeeAmount =
+            ((totalAmount * processingFee.value) / 100);
+        double finalAmount = (totalAmount + processingFeeAmount);
+
+        amountIncluded.value = totalAmount;
+        orderAmount.value = finalAmount;
+        processingAmount.value = processingFeeAmount.toDouble();
+
+        print("saas ${storage.read('shippingCost')}");
+      });
+    }
 
     setState(() {
       if (widget.productModel!.variation!.isNotEmpty &&
@@ -187,10 +242,12 @@ loadAddresses();
           widget.productModel!.variation!.isNotEmpty
               ? (selectedVariation != null
                   ? TBottomAddCart(
+                    isVariation: true,
                     productModel: productModel,
                     productID: selectedVariation!.id,
                     stock: selectedVariation!.stock,
                     productName: widget.productModel!.title!,
+                    variationAttributes: selectedVariation!.attributesValues,
                     productImage: selectedVariation!.image.value,
                     isAvailable:
                         selectedVariation!.stock > 0, // 👈 Updated condition
@@ -203,6 +260,7 @@ loadAddresses();
                   : const SizedBox.shrink())
               : TBottomAddCart(
                 productModel: productModel,
+                isVariation: false,
                 stock: widget.productModel!.stock,
                 productID: widget.productModel!.id!,
                 productName: widget.productModel!.title!,
@@ -403,40 +461,36 @@ loadAddresses();
                             id: widget.productModel!.id!,
                             title: widget.productModel!.title!,
                             image: widget.productModel!.thumbnail!,
-                              quantity: 1,
-                              price:
-                                  salePrice < originalPrice
-                                      ? widget.productModel!.salesPrice
-                                              ?.toDouble() ??
-                                          0.0
-                                      : widget.productModel!.price
-                                              ?.toDouble() ??
-                                          0.0,
-                              variationAttributes:
-                                  {}, 
+                            quantity: 1,
+                            price:
+                                salePrice < originalPrice
+                                    ? widget.productModel!.salesPrice
+                                            ?.toDouble() ??
+                                        0.0
+                                    : widget.productModel!.price?.toDouble() ??
+                                        0.0,
+                            variationAttributes: {},
                           );
                           cartController.addToCartTemp(cart);
                           _showBottomSheet(context);
-                        
                         } else {
-                           final cartController = Get.put(CartController());
-                          final cart =   CartItem(
-                              id: widget.productModel!.id!,
-                              title: widget.productModel!.title!,
-                              image: selectedVariation!.image.toString()!,
-                              quantity: 1,
-                              price:
-                                  (selectedVariation!.salePrice != null &&
-                                          selectedVariation!.salePrice > 0)
-                                      ? selectedVariation!.salePrice.toDouble()
-                                      : selectedVariation!.price.toDouble(),
-                              variationAttributes:
-                                  selectedVariation!
-                                      .attributesValues, // Or map selected variation attributes if needed
-                            );
+                          final cartController = Get.put(CartController());
+                          final cart = CartItem(
+                            id: widget.productModel!.id!,
+                            title: widget.productModel!.title!,
+                            image: selectedVariation!.image.toString()!,
+                            quantity: 1,
+                            price:
+                                (selectedVariation!.salePrice != null &&
+                                        selectedVariation!.salePrice > 0)
+                                    ? selectedVariation!.salePrice.toDouble()
+                                    : selectedVariation!.price.toDouble(),
+                            variationAttributes:
+                                selectedVariation!
+                                    .attributesValues, // Or map selected variation attributes if needed
+                          );
                           cartController.addToCartTemp(cart);
                           _showBottomSheet(context);
-                        
                         }
                       },
                       child: Container(
@@ -595,7 +649,7 @@ loadAddresses();
 
   void _showBottomSheet(BuildContext context) async {
     final cartController = Get.put(CartController());
-    final dark  = THelperFunction.isDarkMode(context);
+    final dark = THelperFunction.isDarkMode(context);
     final storage = GetStorage();
 
     final result = await showModalBottomSheet(
@@ -632,7 +686,9 @@ loadAddresses();
 
                         trailing: Column(
                           children: [
-                            Text('Qty 1: ${storage.read('currency_symbol')} ${item.price}'),
+                            Text(
+                              'Qty 1: ${storage.read('currency_symbol')} ${item.price}',
+                            ),
                             Text(
                               '${storage.read('currency_symbol')} ${(item.price * item.quantity).toStringAsFixed(2)}',
                               style: Theme.of(context).textTheme.titleSmall,
@@ -648,40 +704,149 @@ loadAddresses();
                 );
               }),
 
-              TBillingAmountSections(products: cartController.cartFastItems, isFastCheckout: true, shippingCost: storage.read('shippingCost'),),
-                      if (selectedAddress != null)
-                      TBillingAddress(
-                        name: selectedAddress!.name,
-                        address: selectedAddress!.street,
-                        email: selectedAddress!.phone,
-                        phoneNumer: selectedAddress!.phone,
-                        onPressed: () => showAddressSelector(context),
-                      )
-                    else
-                      TextButton.icon(
-                        icon: const Icon(Icons.location_on),
-                        label: const Text("Select Shipping Address"),
-                        onPressed: () => showAddressSelector(context),
-                      ),
-              const SizedBox(height: TSizes.spaceBetwwenSections,),
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: dark ? Colors.white.withOpacity(0.05) : TColors.primary,
-                    border: Border.all(color: dark ? Colors.grey.withOpacity(0.5) : TColors.dark.withOpacity(0.2)),
-                    borderRadius: BorderRadius.circular(5)
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(TSizes.sm),
-                    child: Text('Confirm Order', textAlign: TextAlign.center,),
-                  ),
-                ),
+              TBillingAmountSections(
+                products: cartController.cartFastItems,
+                isFastCheckout: true,
+                shippingCost: storage.read('shippingCost'),
               ),
+              if (selectedAddress != null)
+                TBillingAddress(
+                  name: selectedAddress!.name,
+                  address: selectedAddress!.street,
+                  email: selectedAddress!.phone,
+                  phoneNumer: selectedAddress!.phone,
+                  onPressed: () => showAddressSelector(context),
+                )
+              else
+                TextButton.icon(
+                  icon: const Icon(Icons.location_on),
+                  label: const Text("Select Shipping Address"),
+                  onPressed: () => showAddressSelector(context),
+                ),
+              const SizedBox(height: TSizes.spaceBetwwenSections),
+              Obx(() {
+                if (paymentController.isPay.value == true) {
+                  return Padding(
+                    padding: const EdgeInsets.all(TSizes.defaultSpace),
+                    child: GestureDetector(
+                      onTap: () {
+                        if (selectedAddress != null) {
+                          final payCont = Get.put(PaymentController());
 
-            
-              const SizedBox(height: TSizes.spaceBetwwenSections,),
+                          double totalPrice =
+                              payCont.finalAmountt.value.toDouble();
+
+                          final config = Config(
+                            paymentAmount: totalPrice.toString(),
+                          );
+                          config.startPayment(
+                            cartController.cartFastItems,
+                            selectedAddress,
+                            totalPrice.toString(),
+                          );
+                        } else {
+                          Get.snackbar(
+                            'Address Required',
+                            'Please select a shipping address before checkout.',
+                          );
+                        }
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: TColors.primary,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text(
+                            'Pay & Place Order',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleMedium!.apply(color: Colors.white),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                } else {
+                  return Padding(
+                    padding: const EdgeInsets.all(TSizes.defaultSpace),
+                    child: GestureDetector(
+                      onTap: () {
+                        if (selectedAddress != null) {
+                          final storage = GetStorage();
+
+                          final payCont = Get.put(PaymentController());
+                          final orderID = generateOrderID();
+                          double totalPrice =
+                              payCont.finalAmountt.value.toDouble();
+                          final order = OrderModel(
+                            orderID: orderID,
+                            userID: storage.read('UID'),
+                            orderStatus: 'placed',
+                            paymentMethod: 'PayHere',
+                            paymentStatus: 'Paid',
+                            shippingAddress: [selectedAddress!],
+                            billingAddress: [selectedAddress!],
+                            totalPrice: totalPrice,
+
+                           shippingCost: (storage.read('shippingCost') as num?)?.toDouble(),
+
+                            subTotal: cartController.subTotalFast,
+                            taxFee: 0,
+                            currencySymbol: storage.read('currency_symbol'),
+                            orderDate: DateTime.now(),
+                            products:
+                                cartController.cartFastItems
+                                    .map((item) => item.toJson())
+                                    .toList(),
+                            couponCode: null,
+                            note: null,
+                          );
+
+                          final paymentController = Get.put(
+                            PaymentController(),
+                          );
+                          paymentController.placeOrder(order);
+                          Get.offAll(
+                            () => OrderSuccessfulScreen(
+                              products: cartController.cartFastItems,
+                              paymentID: 'No Payment ID',
+                              addressModel: selectedAddress,
+                              totalPayment: totalPrice.toString(),
+                              orderID: orderID,
+                            ),
+                          );
+                        } else {
+                          Get.snackbar(
+                            'Address Required',
+                            'Please select a shipping address before checkout.',
+                          );
+                        }
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: TColors.primary,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text(
+                            'Place Order',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleMedium!.apply(color: Colors.white),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+              }),
+
+              const SizedBox(height: TSizes.spaceBetwwenSections),
             ],
           ),
         );
@@ -693,35 +858,44 @@ loadAddresses();
       cartController.removeFromCartFast(widget.productModel!.id!);
     }
   }
-  
+
+  String generateOrderID() {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    return 'ORDER-$timestamp';
+  }
+
   void showAddressSelector(BuildContext context) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.all(16),
-          shrinkWrap: true,
-          itemCount: addresses.length,
-          separatorBuilder: (_, __) => const Divider(),
-          itemBuilder: (_, index) {
-            final address = addresses[index];
-            final isSelected = selectedAddress?.id == address.id;
+      builder:
+          (_) => SafeArea(
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              shrinkWrap: true,
+              itemCount: addresses.length,
+              separatorBuilder: (_, __) => const Divider(),
+              itemBuilder: (_, index) {
+                final address = addresses[index];
+                final isSelected = selectedAddress?.id == address.id;
 
-            return ListTile(
-              title: Text(address.name),
-              subtitle: Text('${address.street}, ${address.city}'),
-              trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.green) : null,
-              onTap: () {
-                setState(() => selectedAddress = address);
-                Navigator.of(context).pop();
+                return ListTile(
+                  title: Text(address.name),
+                  subtitle: Text('${address.street}, ${address.city}'),
+                  trailing:
+                      isSelected
+                          ? const Icon(Icons.check_circle, color: Colors.green)
+                          : null,
+                  onTap: () {
+                    setState(() => selectedAddress = address);
+                    Navigator.of(context).pop();
+                  },
+                );
               },
-            );
-          },
-        ),
-      ),
+            ),
+          ),
     );
   }
 }

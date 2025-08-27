@@ -35,7 +35,7 @@ class TOrderitem extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TBrandTitleVerifiedIcon(title: product.title),
+            Text(product.title, softWrap: true, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.titleSmall,),
             Text('Qty: ${product.quantity}', style: Theme.of(context).textTheme.bodySmall),
             Text('Price: LKR ${(product.price * product.quantity).toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodySmall),
         

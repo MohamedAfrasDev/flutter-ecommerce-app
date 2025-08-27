@@ -79,7 +79,7 @@ class TTabViewICategory extends StatelessWidget {
                         splashColor: Colors.transparent,
                         highlightColor: Colors.transparent,
                         hoverColor: Colors.transparent,
-                        tabBarTheme: const TabBarTheme(
+                        tabBarTheme: const TabBarThemeData(
                           overlayColor: MaterialStatePropertyAll(Colors.transparent),
                           dividerColor: Colors.transparent,
                         ),

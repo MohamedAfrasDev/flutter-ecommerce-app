@@ -7,6 +7,7 @@ import 'package:online_shop/features/shop/screens/home/controllers/home_controll
 import 'package:online_shop/features/splash_screen/splash_screen.dart';
 import 'package:online_shop/navigation_menu.dart';
 import 'package:online_shop/utils/constants/json_service.dart';
+import 'package:online_shop/utils/http/payments/payhere/payhere_controller.dart';
 import 'package:online_shop/utils/theme/theme.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -31,18 +32,37 @@ class _AppState extends State<App> {
 
   bool _isMaintenence = false;
 
+  final paymentController = Get.put(PayhereController());
+
+
+  @override
+  void initState(){
+    super.initState();
+    controller.loadThemeMode();
+    printAllAppConfig();
+    paymentController.getAppPaymentCredentials();
+  }
  
   @override
   Widget build(BuildContext context) {
       final storage = GetStorage();
-            final suapabase = Supabase.instance.client;
 
+
+            
+
+            print("🔴🔴🔴 ${controller.themeMode.value}");
     return GetMaterialApp(
       
-      themeMode: ThemeMode.system,
+      themeMode: controller.themeMode.value,
       theme: TAppTheme.lightTheme,
       darkTheme: TAppTheme.darkTheme,
       home: SplashScreen(),
     );
   }
+  Future<void> printAllAppConfig() async {
+  final supabase = Supabase.instance.client;
+  final allConfigs = await supabase.from('app_config').select('title, value');
+  print('All app_config rows: $allConfigs');
+}
+
 }

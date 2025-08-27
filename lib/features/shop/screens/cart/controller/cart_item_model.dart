@@ -6,6 +6,7 @@ class CartItem {
   final String image;
   final int quantity;
   final double price;
+  final String? variationID;
   final Map<String, String> variationAttributes;
 
   CartItem({
@@ -15,6 +16,7 @@ class CartItem {
     required this.quantity,
     required this.price,
     required this.variationAttributes,
+    this.variationID,
   });
 
   Map<String, dynamic> toJson() => {
@@ -24,6 +26,7 @@ class CartItem {
     'quantity': quantity,
     'price': price,
     'variationAttributes': variationAttributes,
+    'variationID': variationID,
   };
 
 factory CartItem.fromJson(Map<String, dynamic> json) => CartItem(
@@ -35,6 +38,7 @@ factory CartItem.fromJson(Map<String, dynamic> json) => CartItem(
   variationAttributes: json['variationAttributes'] != null
       ? Map<String, String>.from(json['variationAttributes'])
       : <String, String>{},
+      variationID: json['variationID'],
 );
 
 

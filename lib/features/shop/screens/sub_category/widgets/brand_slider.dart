@@ -6,8 +6,8 @@ import 'package:online_shop/utils/constants/colors.dart';
 import 'package:online_shop/utils/constants/sizes.dart';
 import 'package:online_shop/utils/helpers/helper_function.dart';
 
-class THomeCategories extends StatelessWidget {
-  const THomeCategories({
+class TBrandSlider extends StatelessWidget {
+  const TBrandSlider({
     super.key,
     required this.dataList,
     this.isIcon = false,
@@ -21,7 +21,7 @@ class THomeCategories extends StatelessWidget {
     final dark = THelperFunction.isDarkMode(context);
 
     if (dataList.isEmpty) {
-      return const Center(child: Text("No categories found"));
+      return const Center(child: Text("No Brands found"));
     }
 
     return SizedBox(
@@ -53,7 +53,6 @@ class THomeCategories extends StatelessWidget {
                 onTap: () => Get.to(() => SubCategoriesScreen(
                       text: item['title'],
                       categoryID: item['id'],
-                      tabID: item['tab_id'],
                       image: item['image_url'] ?? item['image'],
                     )),
               ),

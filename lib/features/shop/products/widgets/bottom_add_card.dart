@@ -22,6 +22,7 @@ class TBottomAddCart extends StatefulWidget {
   final ProductModel productModel;
   final Map<String, String>? variationAttributes;
   final int? stock;
+  final bool isVariation;
 
   const TBottomAddCart({
     super.key,
@@ -32,7 +33,7 @@ class TBottomAddCart extends StatefulWidget {
     required this.isAvailable,
     this.variationAttributes,
     required this.productModel,
-    required this.stock,
+    required this.stock, required this.isVariation,
   });
 
   @override
@@ -186,14 +187,17 @@ class TAddToCart extends StatelessWidget {
       onTap: () {
         cart.addToCart(
           CartItem(
-            id: widget.productID,
+            id: widget.productModel.id!,
+            variationID: widget.productID,
             title: widget.productName,
             image: widget.productImage,
             quantity: qty,
             price: double.tryParse(widget.productPrice) ?? 0.0,
-            variationAttributes: widget.variationAttributes ?? {},
+            variationAttributes: widget.isVariation ? widget.variationAttributes!  : {},
           ),
         );
+
+     
 
         Get.snackbar("Added", "Product added to cart");
         print('Added to cart: ${cart.cartItems.last.variationAttributes}');

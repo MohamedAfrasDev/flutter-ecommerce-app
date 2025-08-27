@@ -102,4 +102,45 @@ Future<void> fetchShippingAddress(String orderId) async {
        final response = await supabase.from('products').update({'stock' : updatedStock}).eq('id', productID);
 
   }
+Future<void> updateJsonbVariationStock({
+  required String productId,
+  required String variationId,
+  required int quantityToSubtract,
+}) async {
+  print('🔴🔴🔴');
+  final supabase = Supabase.instance.client;
+
+  // Step 1: Fetch the variation JSON from Supabase
+  final productResponse = await supabase
+      .from('products')
+      .select('variation')
+      .eq('id', productId)
+      .maybeSingle();
+
+  if (productResponse == null) {
+    print('❌ Product not found.');
+    return;
+  }
+
+  List<dynamic> variations = productResponse['variation'];
+
+  // Step 2: Find and update the stock
+  for (var variation in variations) {
+    if (variation['id'] == variationId) {
+      int currentStock = variation['stock'] ?? 0;
+      variation['stock'] = (currentStock - quantityToSubtract).clamp(0, currentStock);
+      print('✅ Updated variation stock for $variationId: $currentStock ➡ ${variation['stock']}');
+      break;
+    }
+  }
+
+  // Step 3: Update the variation JSON back to Supabase
+  await supabase
+      .from('products')
+      .update({'variation': variations})
+      .eq('id', productId);
+}
+
+
+  
 }

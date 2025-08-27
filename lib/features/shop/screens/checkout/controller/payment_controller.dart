@@ -4,12 +4,15 @@ import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:online_shop/features/shop/screens/checkout/model/payment_add_model.dart';
 import 'package:online_shop/utils/constants/colors.dart';
+import 'package:online_shop/utils/helpers/models/order_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 class PaymentController extends GetxController {
    var paymentMethods = <String>[].obs;
   var paymentMethod = ''.obs;
+
+  var isPay = false.obs;
 
 
   final TextEditingController aPIKeyController = TextEditingController();
@@ -25,12 +28,28 @@ class PaymentController extends GetxController {
 
 final isSandBox = false.obs;
 
+final isInclude = false.obs;
+
+final finalAmountt = 0.0.obs;
+
   @override
   void onInit() {
     super.onInit();
     fetchPayments();
 fetchPaymentMethods();
    
+  }
+
+
+  Future<void> placeOrder(OrderModel order) async {
+    final supabase = Supabase.instance.client;
+
+    try{
+      final response = await supabase.from('orders').insert(order.toJson());
+      
+    } catch (e) {
+      print("Error ${e.toString()}");
+    }
   }
 
 
