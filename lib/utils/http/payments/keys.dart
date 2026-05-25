@@ -1,5 +1,4 @@
 class TAPIKeys {
-
-  static const String merchantID = '1231086';
-  static const String secretKey = 'MjQ1MDIzMzU5NDIzNjMxNTE3NjEyNjU1Njk4MjM0MTkxODg1NDE5';
+  static const String merchantID = String.fromEnvironment('PAYHERE_MERCHANT_ID', defaultValue: '');
+  static const String secretKey = String.fromEnvironment('PAYHERE_SECRET_KEY', defaultValue: '');
 }

@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-/// Global flag to track Supabase initialization
-bool isSupabaseInitialized = false;
-
 class TColors {
   TColors._();
 
@@ -33,14 +30,8 @@ class TColors {
   static const productCardLight = Colors.white;
   static const productCardDark = Color.fromARGB(255, 22, 25, 26);
 
-  /// Loads primary color from Supabase `app_config` table
   static Future<void> loadPrimaryColorFromSupabase() async {
     try {
-      if (!isSupabaseInitialized) {
-        print('❌ Supabase not initialized yet.');
-        return;
-      }
-
       final supabase = Supabase.instance.client;
       final response = await supabase
           .from('app_config')
@@ -49,14 +40,10 @@ class TColors {
           .maybeSingle();
 
       if (response != null && response['value'] != null) {
-        final hexColor = response['value'];
-        primary = _hexToColor(hexColor);
-        print('✅ Primary color updated to: $primary');
-      } else {
-        print('⚠️ Primary color not found in Supabase.');
+        primary = _hexToColor(response['value']);
       }
     } catch (e) {
-      print('❌ Error loading primary color: $e');
+      debugPrint('Error loading primary color: $e');
     }
   }
 

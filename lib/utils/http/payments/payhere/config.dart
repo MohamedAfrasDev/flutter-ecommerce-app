@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:online_shop/features/shop/screens/cart/controller/cart_item_model.dart';
@@ -7,19 +8,14 @@ import 'package:online_shop/features/shop_2/screens/controller/customer_controll
 import 'package:online_shop/utils/helpers/models/address_model.dart';
 import 'package:online_shop/utils/helpers/models/order_model.dart';
 import 'package:online_shop/utils/http/app/app_config.dart';
-import 'package:online_shop/utils/http/payments/keys.dart';
 import 'package:online_shop/utils/repository/product_model/attributes_model.dart';
-import 'package:online_shop/utils/repository/product_model/product_model.dart';
 import 'package:payhere_mobilesdk_flutter/payhere_mobilesdk_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 
 class Config {
   final String? paymentAmount;
 
   Config({required this.paymentAmount});
 
-  /// Builds the payment map object
   static Map<String, dynamic> buildPaymentObject(String amount, String orderID, String street, String state, String city, String country) {
     final storage = GetStorage();
     return {
@@ -38,7 +34,7 @@ class Config {
       "address": street,
       "city": city,
       "country": country,
-      "delivery_address": "${street} ${state} ${city} ${country}",
+      "delivery_address": "$street $state $city $country",
       "delivery_city": city,
       "delivery_country": country,
       "custom_1": "",
@@ -46,20 +42,18 @@ class Config {
     };
   }
 
-  /// Generate unique Order ID
   String generateOrderID() {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     return 'ORDER-$timestamp';
   }
 
-  /// Start full cart payment
   void startPayment(
     List<CartItem> products,
     AddressModel? addressModel,
     String? totalPayment,
   ) {
     if (paymentAmount == null || addressModel == null || totalPayment == null) {
-      print("❌ Missing data for payment.");
+      debugPrint("Missing data for payment.");
       return;
     }
 
@@ -70,7 +64,7 @@ class Config {
     PayHere.startPayment(
       buildPaymentObject(paymentAmount!, orderID, addressModel.street, addressModel.state, addressModel.city, addressModel.country),
       (paymentId) {
-        print("✅ One Time Payment Success. Payment ID: $paymentId");
+        debugPrint("Payment Success. Payment ID: $paymentId");
         final storage = GetStorage();
         final order = OrderModel(
           orderID: orderID,
@@ -92,7 +86,6 @@ class Config {
         );
 
         final customerController = Get.put(CustomerController());
-
         customerController.checkCustomerExist(storage.read('UID'));
 
         final controller = Get.put(OrderController());
@@ -120,15 +113,14 @@ class Config {
         );
       },
       (error) {
-        print("❌ One Time Payment Failed. Error: $error");
+        debugPrint("Payment Failed: $error");
       },
       () {
-        print("⚠️ One Time Payment Dismissed by user.");
+        debugPrint("Payment dismissed by user.");
       },
     );
   }
 
-  /// Start instant single-product payment
   void startInstantPaymentForProduct(
     String s, {
     required CartItem product,
@@ -138,7 +130,7 @@ class Config {
     required ProductAttributeModel productVariation,
   }) {
     if (paymentAmount.isEmpty) {
-      print("❌ Missing data for payment.");
+      debugPrint("Missing data for payment.");
       return;
     }
 
@@ -150,7 +142,7 @@ class Config {
     PayHere.startPayment(
       buildPaymentObject(paymentAmount, orderID, addressModel.street, addressModel.state, addressModel.city, addressModel.country),
       (paymentId) async {
-        print("✅ One Time Payment Success. Payment ID: $paymentId");
+        debugPrint("Payment Success. Payment ID: $paymentId");
 
         final storage = GetStorage();
         final order = OrderModel(
@@ -186,12 +178,11 @@ class Config {
 
         final controller = Get.put(OrderController());
         await controller.saveOrder(order);
-
         await controller.updateProductStocks(product.id!, quantity);
 
         Get.offAll(
           () => OrderSuccessfulScreen(
-            products: [product], // Corrected: pass ProductModel list
+            products: [product],
             paymentID: paymentId,
             addressModel: addressModel,
             totalPayment: totalAmount.toString(),
@@ -200,10 +191,10 @@ class Config {
         );
       },
       (error) {
-        print("❌ One Time Payment Failed. Error: $error");
+        debugPrint("Payment Failed: $error");
       },
       () {
-        print("⚠️ One Time Payment Dismissed by user.");
+        debugPrint("Payment dismissed by user.");
       },
     );
   }
