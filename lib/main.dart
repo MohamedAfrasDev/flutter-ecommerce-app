@@ -23,8 +23,9 @@ void main() async {
   bool isSupabaseInitialized = false;
   try {
     await Supabase.initialize(
-      url: EnvConfig.supabaseUrl,
-      anonKey: EnvConfig.supabaseAnonKey,
+      url: 'YOUR_URL',
+      anonKey:
+          'YOUR_ANON_KEY',
     );
     isSupabaseInitialized = true;
   } catch (e) {
