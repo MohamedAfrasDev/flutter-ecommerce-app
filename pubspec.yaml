@@ -64,7 +64,7 @@ flutter:
     - assets/brand_items.json
     - assets/product_details.json
     - assets/material.json
-    - assets\sources\new_arrival.json
+    - assets/sources/new_arrival.json
 
   uses-material-design: true
 

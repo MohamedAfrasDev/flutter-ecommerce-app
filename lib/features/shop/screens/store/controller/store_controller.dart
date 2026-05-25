@@ -1,4 +1,4 @@
-// lib/features/shop/controllers/store_controller.dart
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:online_shop/utils/repository/product_model/product_model.dart';
@@ -34,9 +34,7 @@ class StoreController extends GetxController {
           .order('created_at', ascending: false)
           .range(start, end);
 
-          print('🔴🔴 ${response.length}');
-
-      if (response == null || (response as List).isEmpty) {
+      if (response.isEmpty) {
         hasMore.value = false;
         isLoading.value = false;
         return;
@@ -57,9 +55,8 @@ class StoreController extends GetxController {
 
       page += 1;
       isLoading.value = false;
-    } catch (e, st) {
-      print('🔴🔴Error: $e');
-      print('🔴🔴Stacktrace: $st');
+    } catch (e) {
+      debugPrint('Error fetching products: $e');
       isLoading.value = false;
     }
   }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,65 +11,45 @@ class PayhereController extends GetxController {
     final storage = GetStorage();
 
     try {
-      final API =
-          await supabase
-              .from('payment_credentials')
-              .select('APIKey')
-              .eq('PaymentProvider', 'PayHere')
-              .maybeSingle();
+      final apiResponse = await supabase
+          .from('payment_credentials')
+          .select('APIKey')
+          .eq('PaymentProvider', 'PayHere')
+          .maybeSingle();
 
-      print('🟢 Supabase check resasa🎫🎫sult: $API');
-
-      API?['APIKey'].toString();
-
-
-      storage.write('APIKey', API!['APIKey'].toString());
-            print('APKI 🧑🏻‍💻🧑🏻‍💻 ${storage.read('APIKey')}');
-
+      if (apiResponse != null) {
+        storage.write('APIKey', apiResponse['APIKey'].toString());
+      }
     } catch (e) {
-      print('🔴 Error fetching review config: ${e.toString()}');
+      debugPrint('Error fetching API key: $e');
     }
 
     try {
-      final MerchantID =
-          await supabase
-              .from('payment_credentials')
-              .select('MerchantID')
-              .eq('PaymentProvider', 'PayHere')
-              .maybeSingle();
+      final merchantResponse = await supabase
+          .from('payment_credentials')
+          .select('MerchantID')
+          .eq('PaymentProvider', 'PayHere')
+          .maybeSingle();
 
-      print('🟢 Supabase check resasa🎫🎫sult: $MerchantID');
-
-      MerchantID?['MerchantID'].toString();
-      storage.write('MerchantID', MerchantID!['MerchantID'].toString());
-            print('MERCHANT 🧑🏻‍💻🧑🏻‍💻 ${storage.read('MerchantID')}');
-
+      if (merchantResponse != null) {
+        storage.write('MerchantID', merchantResponse['MerchantID'].toString());
+      }
     } catch (e) {
-      print('🔴 Error fetching review config: ${e.toString()}');
+      debugPrint('Error fetching Merchant ID: $e');
     }
 
+    try {
+      final sandboxResponse = await supabase
+          .from('payment_credentials')
+          .select('isSandBox')
+          .eq('PaymentProvider', 'PayHere')
+          .maybeSingle();
 
-
-     try {
-      final checkSandbox =
-          await supabase
-              .from('payment_credentials')
-              .select('isSandBox')
-              .eq('PaymentProvider', 'PayHere')
-              .maybeSingle();
-
-      print('🟢 Supabase check resasa🎫🎫sult: $checkSandbox');
-
-      checkSandbox?['APIKey'].toString();
-
-      bool isCheck = checkSandbox!['isSandBox'] == true ? true : false;
-
-
-      storage.write('isSandBox', isCheck);
-            print('isSandBox 🧑🏻‍💻🧑🏻‍💻 ${storage.read('isSandBox')}');
-
+      if (sandboxResponse != null) {
+        storage.write('isSandBox', sandboxResponse['isSandBox'] == true);
+      }
     } catch (e) {
-      print('🔴 Error fetching review config: ${e.toString()}');
+      debugPrint('Error fetching sandbox config: $e');
     }
   }
 }
